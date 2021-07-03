@@ -27,7 +27,7 @@
 	▒ ▓███▀ ░░██▓ ▒██▒░ ████▓▒░▒██████▒▒▒██████▒▒   ▒ ▓███▀  ░▒▓█████▓
 	░ ░▒ ▒  ░░ ▒▓ ░▒▓░░ ▒░▒░▒░ ▒ ▒▓▒ ▒ ░▒ ▒▓▒ ▒ ░   ░ ░▒ ▒    ░▒ ░▓ ░░
 	  ░  ▒     ░▒ ░ ▒░  ░ ▒ ▒░ ░ ░▒  ░ ░░ ░▒  ░ ░     ░  ▒     ░ ░░ ░
-	░          ░░   ░ ░ ░ ░ ▒  ░  ░  ░  ░  ░  ░  CrossC2 v2.0 @hook
+	░          ░░   ░ ░ ░ ░ ▒  ░  ░  ░  ░  ░  ░  CrossC2 v2.2 @hook
 	░ ░         ░         ░ ░        ░        ░     ░ ░          ░
 	░                                               ░     
 ```
@@ -68,19 +68,39 @@
 
 * **CrossC2.cna**
 * **genCrossC2** `(如果操作系统是Windows, 下载genCrossC2.Win.exe)`
+<details>
+<summary><b>注意事项⚠️</b></summary>
+genCrossC2.Win.exe 需要依赖的两个文件为`ucrtbased.dll`,`vcruntime140d.dll`。
+</br>可自己安装依赖或者使用issue中提供的文件拷贝至`C:\Windows\System32`
+[issue: win_sdk_dll](https://github.com/gloxec/CrossC2/issues/49#issuecomment-748630879)
+</details>
 
-1. 选择`Script Manager`，添加`CrossC2.cna` (如果成功安装，菜单栏会多出一项 `CrossC2`)
-2. 修改`CrossC2.cna`脚本中`genCC2`路径为**真实路径**
+1. 修改`CrossC2.cna`脚本中`CC2_PATH, CC2_BIN`路径为**真实路径**
+```
+3:    $CC2_PATH = "/xxx/xx/xx/"; # <-------- fix
+4:    $CC2_BIN = "genCrossC2.MacOS";
+```
 
-```
-77:    $genCC2 = "/xxx/xx/xx/genCrossC2.MacOS";  # <-------- fix
-```
+2. 选择`Script Manager`，添加`CrossC2.cna` (如果成功安装，菜单栏会多出一项 `CrossC2`)
+
 
 > 建立listener与拷贝key:
 
 因为一些原因，目前强制只支持HTTPS beacon。
 
-**复制server上cs目录下的 `.cobaltstrike.beacon_keys`到本地目录下**
+1. 复制**server上cs目录**下的 `.cobaltstrike.beacon_keys`到**本地目录**下
+
+> 功能扩展:
+
+1. 下载CrossC2Kit, 添加`CrossC2Kit_Loader.cna`, 包含内存加载等其它功能。(`cs4.x`版本文件管理功能缺失，必须使用此Loader来重新启用文件管理)
+
+> 运行beacon的方法:
+
+* 在目标上运行CrossC2插件生成的一键上线脚本
+* 上传beacon至目标机器后进行赋权运行
+* 为beacon设定工作目录并运行: `export CCPATH=/opt/ && /tmp/c2`
+* 为beacon临时指定协议库并运行: `/tmp/c2 /tmp/c2-rebind.so`
+* 为beacon临时设定C2配置: `export CCHOST=127.0.0.1 && export CCPORT=443 && /tmp/c2`
 
 
 ## 安装参考文档: [📖 Wiki](https://gloxec.github.io/CrossC2/zh_cn/usage/)
@@ -88,10 +108,18 @@
 ## 自定义模块: API介绍 [📖 Wiki](https://gloxec.github.io/CrossC2/zh_cn/api/)
 
 采用内存无落地加载方式，支持动态库(.so/.dylib)以及可执行文件(ELF/MachO)。
-`⚠️: 虽然文件是直接从内存加载的，但选用可执行文件的方式在传入参数时，进程是可以在ps中查看到的，不过进程名可以自定义。`
+
 
 执行时输出信息的类型可以自由指定，已预定了返回类型，可对接CS原生的返回数据类型。
-`⚠️: 关于特殊的数据类型，如密码，端口扫描结果等，请参照cs原生功能返回的信息编写，将按照正则匹配。`
+
+<details>
+<summary><b>注意事项⚠️</b></summary>
+`⚠️: 虽然文件都是无落地从内存加载，但选用可执行文件(ELF/MachO)的方式在传入参数时，进程是可以在ps中查看到的，不过进程名可以自定义。`
+</br>`⚠️: 关于特殊的数据类型，如密码，端口扫描结果等，请参照cs原生功能返回的信息编写，将按照正则匹配。`
+</details>
+
+<details>
+<summary><b>现有扩展模块</b></summary>
 
 1. 密码dump模块：cc2_mimipenguin 采用开源项目 MimiPenguin2.0，参见 CrossC2Kit/mimipenguin/mimipenguin.cna
 
@@ -111,6 +139,8 @@
 
 9. ...
 
+</details>
+
 
 ## 自定义通信协议: API介绍 [📖 Wiki](https://gloxec.github.io/CrossC2/zh_cn/protocol/)
 
@@ -124,6 +154,9 @@
 
 ## 内存中运行脚本
 
+<details>
+<summary><b>运行示例</b></summary>
+
 可以直接在会话中调用主机中的 **bash** / **python** / **ruby** / **perl** / **php** 等脚本解释器执行传入内存中的脚本。
 `进程中不会存在任何信息，所有运行的内容皆从内存中传入解释器`
 1. python c:\getsysteminfo.py
@@ -136,7 +169,7 @@
 尝试直接运行脚本语言:
 ![](media/15901534124389/16041502298949.jpg)
 
-
+</details>
 
 # 即将上线
 
@@ -145,22 +178,37 @@
 3. http-proxy (auth) & socks 代理回连支持
 4. 流量中转支持 ✔︎ (暂时采用回连socks代理的方式)
 5. node beacon? (单个节点式，可进行不依靠teamserver托管其他beacon)
+6. Linux & MacOS 端so/dylib的上线支持、及其衍生的进程注入等功能
 
 # Examples
+
+<details>
+<summary><b>Mobile</b></summary>
 
 ## Mobile
 ![](media/15848885324084/15848892759774.jpg)
 
 ![](media/15848885324084/15848892902723.jpg)
 
+</details>
+
+<details>
+<summary><b>MacOS & Linux</b></summary>
+
 ## MacOS & Linux
 
 ![](media/15794884596715/15795001494711.jpg)
 ![](media/15824278372797/15824282351545.jpg)
 
+</details>
+
+<details>
+<summary><b>CustomExtension</b></summary>
+
 ## CustomExtension
 
 开发动态库，自定义数据返回类型，例如实现一些内置功能。
+
 
 ### 键盘记录
 ![](media/15854585486601/15854592406527.jpg)
@@ -171,7 +219,51 @@
 ### 端口扫描
 ![](media/15854585486601/15854593957704.jpg)
 
+</details>
+
 # ChangeLog
+
+## release v2.2.4 - stable :
+* -修复 v2.2.3 的上线问题 #84 #85
+* +支持 Linux支持从procfs中获取进程列表信息
+
+## release v2.2.3 :
+* -修复 修复32位Linux下打开文件管理器时beacon退出的bug
+* -修复 修复多指令合并任务中`bcd`、`bls`、`bupload`等函数解析错误问题，现在可以处理与windows beacon相同的cna脚本  #81
+* +支持 添加两个环境变量用于临时设置beacon连接的C2地址 (`CCHOST` & `CCPORT`)
+
+> export CCHOST=127.0.0.1 && export CCPORT=443  && /tmp/c2
+
+* +支持 添加bupload函数支持 https://github.com/gloxec/CrossC2/issues/81#issuecomment-841068719
+
+## release v2.2.2 - stable:
+* -修复 修复加载自定义通信协议库时导致beacon无法启动的一些bug
+* +支持 新增两种强制指定beacon加载自定义通信协议库的运行方式
+
+> 1. export CCPATH=/opt/  && /tmp/c2
+(为beacon强制设定具有权限的工作目录, 例如 `/opt/`)
+> 2. /tmp/c2 /tmp/c2-rebind.so
+(为beacon强制指定通信协议库)
+
+## release v2.2.1 :
+* -修复 修复文件下载速度过慢的问题（现已达到满速）
+* -修复 修复同时下载多个文件出现的问题（使用`downloads`命令查看进度）
+* -修复 修复低版本内核系统上`/tmp/`目录文件权限默认没有执行权限，导致`beacon`无法启动的问题
+* -修复 修复低版本内核系统上`beacon`反复上线时，资源被占用导致失败的问题
+* -修复 修复文件落地时在低版本内核系统时遇到名称冲突，无法运行的问题
+
+## release v2.2 :
+
+* -变更 仅支持 CS4.x (>=4.1)，低版本后续将不再支持。
+* -修复 修复通信协议重绑定在低版本Linux内核上错误的问题
+* +支持 C2域名解析支持
+* +支持 支持内存执行组件的持续化调用
+* +支持 支持添加内存执行的shell别名，方便团队其他人直接通过shell指令调用已加载的内存执行组件
+* +支持 python-import支持，像powershell-import一样为python执行提供便利
+* +支持 genCrossC2生成器支持更低版本的GLIBC
+
+<details>
+<summary><b>历史版本更新说明</b></summary>
 
 ## release v2.1 :
 
@@ -281,6 +373,7 @@ md5(genCrossC2.Linux) = f4c0cc85c7cdd096d2b7febedc037538
 md5(genCrossC2.MacOS) = 79fff0505092fc2055824ed1289ce8f9
 
 
+</details>
 
 
 
